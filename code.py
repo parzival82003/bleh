@@ -4,6 +4,7 @@ import sqlite3
 import random
 import string
 import redis
+import re
 
 app = Flask(__name__)
 app.debug = True  # Enable debug mode for detailed error messages
@@ -12,7 +13,6 @@ app.debug = True  # Enable debug mode for detailed error messages
 redis_host = 'localhost'
 redis_port = 6379
 redis_client = redis.Redis(host=redis_host, port=redis_port, db=0)
-
 def create_table():
     cursor.execute("CREATE TABLE IF NOT EXISTS website_health (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT, status TEXT)")
 
@@ -39,11 +39,24 @@ def check_health(url):
         print(f"An error occurred while checking health: {str(e)}")
         return "Unhealthy"
 
-def perform_security_test(url):
-    if url.startswith("http://"):
-        return "Insecure"
-    else:
-        return "Secure"
+import requests
+import re
+
+def custom_health_check(url):
+    try:
+        response = requests.get(url)
+        
+        if response.status_code == 200:
+            content_type = response.headers.get("Content-Type", "")
+            if "text/html" in content_type:
+              return "Healthy"
+            
+            return "Unhealthy"
+        else:
+            return "Unhealthy"
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred while performing custom health check: {str(e)}")
+        return "Unhealthy"
 
 @app.route('/')
 def index():
@@ -53,20 +66,20 @@ def index():
 def check():
     website_url = request.form['website_url']
     health_status = check_health(website_url)
-    security_status = perform_security_test(website_url)
+    security_status = custom_health_check(website_url)
     try:
         cursor.execute("INSERT INTO website_health (url, status) VALUES (?, ?)", (website_url, health_status))
         db.commit()
     except sqlite3.Error as e:
         print(f"An error occurred while inserting data into the database: {str(e)}")
 
-    # Store the result in Redis
+    # Store the result in Redissecurity = securitytest(website_url)
     try:
         redis_client.set(website_url, health_status)
     except redis.exceptions.ConnectionError as e:
         print(f"Error connecting to Redis: {str(e)}")
     redis_output = redis_client.get(website_url).decode('utf-8')
-    return render_template('result.html', website_url=website_url, health_status=health_status, redis_output=redis_output, security_test=security_status)
+    return render_template('result.html', website_url=website_url, health_status=health_status,redis_output=redis_output,security_test=security_status)
 
 if __name__== '__main__':
     try:

@@ -1,4 +1,3 @@
-import requests
 from flask import Flask, render_template, request
 import sqlite3
 import random
@@ -30,17 +29,17 @@ def insert_random_data():
 
 def check_health(url):
     try:
-        response = requests.get(url)
+        response = request.get(url)
         if response.status_code == 200:
             return "Healthy"
         else:
             return "Unhealthy"
-    except requests.exceptions.RequestException as e:
+    except request.exceptions.RequestException as e:
         print(f"An error occurred while checking health: {str(e)}")
         return "Unhealthy"
 def custom_health_check(url):
     try:
-        response = requests.get(url)
+        response = request.get(url)
         
         if response.status_code == 200:
             content_type = response.headers.get("Content-Type", "")
@@ -50,7 +49,7 @@ def custom_health_check(url):
             return "Unhealthy"
         else:
             return "Unhealthy"
-    except requests.exceptions.RequestException as e:
+    except request.exceptions.RequestException as e:
         print(f"An error occurred while performing custom health check: {str(e)}")
         return "Unhealthy"
 

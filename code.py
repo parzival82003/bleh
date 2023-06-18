@@ -23,7 +23,7 @@ def generate_random_string(length):
 def insert_random_data():
     for _ in range(10):
         url = f"https://{generate_random_string(10)}.com"
-        status = random.choice(["Healthy"])
+        status = "Healthy"
         cursor.execute("INSERT INTO website_health (url, status) VALUES (?, ?)", (url, status))
 
     db.commit()
